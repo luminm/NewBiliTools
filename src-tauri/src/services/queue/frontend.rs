@@ -1,0 +1,212 @@
+use anyhow::{anyhow, Context, Result};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use specta::Type;
+use std::collections::VecDeque;
+use tauri::Listener;
+use tauri_specta::Event;
+use tokio::sync::oneshot;
+
+use crate::{
+    shared::{get_app_handle, get_millis},
+    TauriError, TauriResult,
+};
+
+use super::{
+    atomics::{QueueType, SchedulerState, TaskState},
+    task::{SubTask, TaskPrepare},
+    types::{MediaNfo, PopupSelect},
+};
+
+#[derive(Debug, Deserialize)]
+struct FrontendErrorPayload {
+    error: bool,
+    message: String,
+}
+
+#[derive(Debug, Clone, Serialize, Type, Event)]
+#[serde(
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase",
+    tag = "type"
+)]
+pub enum QueueEvent<'a> {
+    TaskUpdated {
+        id: &'a str,
+        state: Option<&'a TaskState>,
+        prepare: Option<&'a TaskPrepare>,
+        cancelled: Option<bool>,
+    },
+    SchedulerUpdated {
+        id: &'a str,
+        state: Option<&'a SchedulerState>,
+        queue: Option<&'a QueueType>,
+        list: Option<&'a Vec<String>>,
+        cancelled: Option<bool>,
+    },
+    Progress {
+        task: &'a str,
+        subtask: &'a str,
+        content: &'a u64,
+        chunk: &'a u64,
+    },
+    Queue {
+        name: &'a QueueType,
+        value: &'a VecDeque<String>,
+    },
+    Request {
+        task: &'a str,
+        subtask: Option<&'a str>,
+        action: &'a RequestAction,
+        endpoint: &'a str,
+    },
+    Error {
+        task: &'a str,
+        subtask: Option<&'a str>,
+        message: &'a str,
+        code: Option<isize>,
+    },
+}
+
+pub fn task_updated<'a>(
+    id: &'a str,
+    state: Option<&'a TaskState>,
+    prepare: Option<&'a TaskPrepare>,
+    cancelled: Option<bool>,
+) -> Result<()> {
+    let app = get_app_handle();
+    QueueEvent::TaskUpdated {
+        id,
+        state,
+        prepare,
+        cancelled,
+    }
+    .emit(app)?;
+    Ok(())
+}
+
+pub fn scheduler_updated<'a>(
+    id: &'a str,
+    state: Option<&'a SchedulerState>,
+    queue: Option<&'a QueueType>,
+    list: Option<&'a Vec<String>>,
+    cancelled: Option<bool>,
+) -> Result<()> {
+    let app = get_app_handle();
+    QueueEvent::SchedulerUpdated {
+        id,
+        state,
+        queue,
+        list,
+        cancelled,
+    }
+    .emit(app)?;
+    Ok(())
+}
+
+pub fn progress<'a>(
+    task: &'a str,
+    subtask: &'a str,
+    content: &'a u64,
+    chunk: &'a u64,
+) -> Result<()> {
+    let app = get_app_handle();
+    QueueEvent::Progress {
+        task,
+        subtask,
+        content,
+        chunk,
+    }
+    .emit(app)?;
+    Ok(())
+}
+
+pub fn queue<'a>(name: &'a QueueType, value: &'a VecDeque<String>) -> Result<()> {
+    let app = get_app_handle();
+    QueueEvent::Queue { name, value }.emit(app)?;
+    Ok(())
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum RequestAction {
+    PrepareTask,
+    GetFilename,
+    GetNfo,
+    GetThumbs,
+    GetDanmaku,
+    GetSubtitle,
+    GetAISummary,
+    GetOpusContent,
+    GetOpusImages,
+}
+
+impl RequestAction {
+    pub fn as_string(&self) -> String {
+        serde_plain::to_string(self).unwrap_or_default()
+    }
+    pub fn from_str_lossy(from: &str) -> RequestAction {
+        serde_plain::from_str(from).unwrap_or(RequestAction::PrepareTask)
+    }
+}
+
+pub async fn request<'a, T: DeserializeOwned + Send + 'static>(
+    task: &'a str,
+    subtask: Option<&'a str>,
+    action: &'a RequestAction,
+) -> TauriResult<T> {
+    let (tx, rx) = oneshot::channel();
+    let app = get_app_handle();
+    let ts = get_millis();
+    let endpoint = &format!("{task}_{}_{ts}", action.as_string());
+    app.once(endpoint, move |event| {
+        let payload = event.payload();
+        if let Ok(error) = serde_json::from_str::<FrontendErrorPayload>(payload) {
+            if error.error {
+                let _ = tx.send(Err(anyhow!(error.message)));
+                return;
+            }
+        }
+        let _ = tx.send(
+            serde_json::from_str::<Option<T>>(payload)
+                .context("Failed to deserialize frontend response"),
+        );
+    });
+    QueueEvent::Request {
+        task,
+        subtask,
+        action,
+        endpoint,
+    }
+    .emit(app)?;
+    let res = rx.await.context("No response from frontend")??;
+    Ok(res.ok_or(anyhow!("Error occurred from frontend"))?)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct TaskPrepareResp {
+    pub nfo: MediaNfo,
+    #[serde(rename = "subFolder")]
+    pub sub_folder: String,
+    #[serde(rename = "videoUrls")]
+    pub video_urls: Option<Vec<String>>,
+    #[serde(rename = "audioUrls")]
+    pub audio_urls: Option<Vec<String>>,
+    pub subtasks: Vec<SubTask>,
+    pub select: PopupSelect,
+}
+
+pub fn error<'a>(
+    task: &'a str,
+    subtask: Option<&'a str>,
+    error: &'a TauriError,
+) -> TauriResult<()> {
+    let app = get_app_handle();
+    QueueEvent::Error {
+        task,
+        subtask,
+        message: &error.message,
+        code: error.code.map(|c| c.as_isize()),
+    }
+    .emit(app)?;
+    Ok(())
+}

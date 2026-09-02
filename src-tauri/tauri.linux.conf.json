@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "identifier": "com.btjawa.bilitools",
+  "productName": "bilitools",
+  "mainBinaryName": "bilitools",
+  "app": {
+    "windows": [
+      {
+        "minWidth": 960,
+        "minHeight": 680,
+        "title": "BiliTools",
+        "label": "main",
+        "width": 960,
+        "height": 680,
+        "decorations": false,
+        "dragDropEnabled": false
+      }
+    ]
+  },
+  "bundle": {
+    "targets": ["deb", "rpm", "appimage"],
+    "externalBin": [
+      "binaries/linux/bilitools-aria2c",
+      "binaries/linux/bilitools-ffmpeg",
+      "binaries/linux/bilitools-DanmakuFactory"
+    ],
+    "resources": {
+      "resources/COPYING.aria2c": "COPYING.aria2c",
+      "resources/COPYING.LGPLv3.ffmpeg": "COPYING.LGPLv3.ffmpeg",
+      "resources/LICENSE.DanmakuFactory": "LICENSE.DanmakuFactory",
+      "resources/LICENSE.OpenSSL": "LICENSE.OpenSSL"
+    },
+    "linux": {
+      "deb": {
+        "desktopTemplate": "./packages/linux/bilitools.desktop"
+      },
+      "rpm": {
+        "desktopTemplate": "./packages/linux/bilitools.desktop"
+      },
+      "appimage": {
+        "bundleMediaFramework": false
+      }
+    }
+  }
+}

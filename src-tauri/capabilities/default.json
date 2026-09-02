@@ -1,0 +1,64 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability for the main window",
+  "windows": ["main"],
+  "platforms": ["linux", "macOS", "windows"],
+  "permissions": [
+    "core:event:default",
+    "core:app:default",
+    "core:window:allow-close",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-internal-toggle-maximize",
+    "core:window:allow-is-maximized",
+    "core:window:allow-set-focus",
+    "core:window:allow-is-focused",
+    "core:window:allow-unminimize",
+    "core:window:allow-start-dragging",
+    "core:window:allow-set-always-on-top",
+    "core:window:allow-is-always-on-top",
+    "shell:allow-open",
+    "opener:allow-open-path",
+    "opener:allow-open-url",
+    {
+      "identifier": "opener:allow-open-path",
+      "allow": [{ "path": "**/*" }]
+    },
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        { "url": "https://*.bilibili.com/*" },
+        { "url": "https://*.hdslb.com/*" },
+        { "url": "https://bilibili.com/*" },
+        { "url": "https://github.com/*" },
+        { "url": "https://btjawa.top/*" },
+        { "url": "https://afdian.com/*" }
+      ]
+    },
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "dialog:allow-ask",
+    "dialog:allow-message",
+    "os:allow-arch",
+    "os:allow-os-type",
+    "clipboard-manager:allow-read-text",
+    "process:allow-restart",
+    "http:allow-fetch",
+    "http:allow-fetch-read-body",
+    "http:allow-fetch-send",
+    "http:allow-fetch-cancel",
+    {
+      "identifier": "http:allow-fetch",
+      "allow": [
+        { "url": "https://*.bilibili.com/*" },
+        { "url": "https://*.hdslb.com/*" },
+        { "url": "https://*.biliimg.com/*" },
+        { "url": "https://*.b23.tv/*" }
+      ]
+    },
+    "updater:allow-check",
+    "updater:allow-download-and-install",
+    "log:default"
+  ]
+}

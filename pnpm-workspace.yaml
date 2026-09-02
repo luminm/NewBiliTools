@@ -1,0 +1,6 @@
+packages:
+  - '.'
+  - 'docs'
+allowBuilds:
+  '@tailwindcss/oxide': true
+  esbuild: true

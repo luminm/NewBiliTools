@@ -1,0 +1,9 @@
+node_modules/
+docs/node_modules/
+dist/
+
+src-tauri/target/
+src-tauri/target-check/
+src-tauri/gen/schemas/
+
+*.log

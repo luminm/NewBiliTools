@@ -1,0 +1,48 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "BiliTools",
+  "version": "1.4.46",
+  "identifier": "com.btjawa.bilitools",
+  "build": {
+    "beforeDevCommand": "pnpm web:dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm web:build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "category": "Utility",
+    "copyright": "Copyright © 2025 btjawa",
+    "createUpdaterArtifacts": true,
+    "homepage": "https://github.com/btjawa/BiliTools",
+    "icon": [
+      "icons/32x32.png",
+      "icons/64x64.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico",
+      "icons/icon.png"
+    ],
+    "license": "GPL-3.0-or-later",
+    "publisher": "bilbil",
+    "shortDescription": "A cross-platform bilibili toolbox"
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "dialog": false,
+      "dangerousInsecureTransportProtocol": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDg0MEMzRDM5MUNBMkYzMEMKUldRTTg2SWNPVDBNaEthQU9pdzNmVlRBTzdNRVZQVU1EeU5yblYvVFpFcjdZVlVSYTdFOVRlSXoK",
+      "endpoints": [
+        "http://127.0.0.1:45678/latest.json"
+      ]
+    }
+  }
+}

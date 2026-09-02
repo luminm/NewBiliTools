@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=BiliTools
+Exec={{{exec}}} %u
+Icon={{{icon}}}
+Terminal=false
+Comment={{{comment}}}
+Categories={{{categories}}}
